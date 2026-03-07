@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: zozchat
+    env: node
+    buildCommand: cd backend && npm install && cd ../frontend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        fromDatabase:
+          name: zozchat-db
+          property: connectionString
+
+databases:
+  - name: zozchat-db
+    databaseName: chat
+    user: zozchat
