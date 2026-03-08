@@ -2,6 +2,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors')
 const path = require('path')
+const fs = require('fs')
 const { MongoMemoryServer } = require('mongodb-memory-server')
 require('dotenv').config()
 
@@ -40,12 +41,22 @@ app.use('/api/private-messages', privateMessageRoutes)
 
 // 生产环境：提供前端静态文件
 if (NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/dist')))
-  
-  // 所有其他请求返回前端应用
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'))
-  })
+  try {
+    const distPath = path.join(__dirname, '../frontend/dist')
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath))
+
+      // 所有其他请求返回前端应用
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'))
+      })
+      console.log('✅ 前端静态文件已加载')
+    } else {
+      console.log('⚠️  前端构建目录不存在，仅提供 API 服务')
+    }
+  } catch (error) {
+    console.error('加载前端文件错误:', error)
+  }
 }
 
 // 连接数据库的函数
@@ -70,15 +81,15 @@ async function connectDatabase() {
         console.log('✅ 已连接到本地 MongoDB 数据库')
       } catch (err) {
         console.log('⚠️  本地 MongoDB 未启动，正在启动内存数据库...')
-        
+
         const mongod = await MongoMemoryServer.create()
         const uri = mongod.getUri()
-        
+
         await mongoose.connect(uri, {
           useNewUrlParser: true,
           useUnifiedTopology: true
         })
-        
+
         console.log('✅ 内存数据库启动成功')
         console.log('💡 提示：数据将在服务器重启后丢失，仅用于测试')
       }
@@ -140,7 +151,7 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log(`🚀 服务器运行在 http://localhost:${PORT}`)
     console.log(`📦 环境: ${NODE_ENV}`)
-    
+
     if (NODE_ENV === 'development') {
       console.log('\n📋 API 端点：')
       console.log('   POST /api/auth/register - 注册')
