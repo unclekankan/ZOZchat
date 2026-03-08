@@ -938,11 +938,10 @@ export default {
       if (url.startsWith('/upbads')) {
         return url.replace('/upbads', '/uploads')
       }
-      // 确保 /uploads 路径的图片使用正确的完整 URL
+      // 确保 /uploads 路径的图片使用正确的 URL
       if (url.startsWith('/uploads')) {
-        // 使用后端服务的 URL
-        const baseUrl = 'http://localhost:3000'
-        return baseUrl + url
+        // 使用相对路径，这样在任何环境中都能正常工作
+        return url
       }
       return url
     },
