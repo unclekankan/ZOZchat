@@ -62,41 +62,27 @@ if (NODE_ENV === 'production') {
 // 连接数据库的函数
 async function connectDatabase() {
   try {
-    if (NODE_ENV === 'production') {
+    if (NODE_ENV === 'production' && MONGODB_URI) {
       // 生产环境：使用配置的 MongoDB URI
       await mongoose.connect(MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
         serverSelectionTimeoutMS: 5000
       })
       console.log('✅ 已连接到 MongoDB 数据库')
     } else {
-      // 开发环境：尝试连接本地 MongoDB，失败则使用内存数据库
-      try {
-        await mongoose.connect(MONGODB_URI, {
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-          serverSelectionTimeoutMS: 5000
-        })
-        console.log('✅ 已连接到本地 MongoDB 数据库')
-      } catch (err) {
-        console.log('⚠️  本地 MongoDB 未启动，正在启动内存数据库...')
-
-        const mongod = await MongoMemoryServer.create()
-        const uri = mongod.getUri()
-
-        await mongoose.connect(uri, {
-          useNewUrlParser: true,
-          useUnifiedTopology: true
-        })
-
-        console.log('✅ 内存数据库启动成功')
-        console.log('💡 提示：数据将在服务器重启后丢失，仅用于测试')
-      }
+      // 开发环境或生产环境无 MONGODB_URI：使用内存数据库
+      console.log('⚠️  未配置 MongoDB URI，正在启动内存数据库...')
+      
+      const mongod = await MongoMemoryServer.create()
+      const uri = mongod.getUri()
+      
+      await mongoose.connect(uri, {})
+      
+      console.log('✅ 内存数据库启动成功')
+      console.log('💡 提示：数据将在服务器重启后丢失')
     }
   } catch (err) {
     console.error('❌ 数据库连接失败:', err)
-    if (NODE_ENV === 'production') {
+    if (NODE_ENV === 'production' && MONGODB_URI) {
       console.log('\n请检查 MongoDB 连接配置')
       process.exit(1)
     }
