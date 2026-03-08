@@ -143,14 +143,21 @@ async function connectDatabase() {
 // 初始化默认数据
 async function initializeDefaultData() {
   try {
+    // 读取管理员头像文件并转换为 base64
+    const avatarPath = path.join(__dirname, 'uploads', 'admin-avatar.jpg')
+    let adminAvatarBase64 = ''
+    if (fs.existsSync(avatarPath)) {
+      const avatarBuffer = fs.readFileSync(avatarPath)
+      adminAvatarBase64 = `data:image/jpeg;base64,${avatarBuffer.toString('base64')}`
+      console.log('📸 已读取管理员头像并转换为 base64')
+    } else {
+      console.log('⚠️ 管理员头像文件不存在，使用默认路径')
+      adminAvatarBase64 = '/uploads/admin-avatar.jpg'
+    }
+
     // 创建超级管理员账号
     let adminUser = await User.findOne({ username: ADMIN_USERNAME })
     if (!adminUser) {
-      // 确保头像路径正确，避免重复的 .jpg 后缀
-      let cleanAvatar = ADMIN_AVATAR
-      if (cleanAvatar.endsWith('.jpg.jpg')) {
-        cleanAvatar = cleanAvatar.replace('.jpg.jpg', '.jpg')
-      }
       adminUser = new User({
         username: ADMIN_USERNAME,
         password: ADMIN_PASSWORD,
@@ -159,25 +166,20 @@ async function initializeDefaultData() {
         bio: '超级管理员账号',
         friendCode: DEFAULT_FRIEND_CODE,
         isAdmin: true,
-        avatar: cleanAvatar
+        avatar: adminAvatarBase64
       })
       await adminUser.save()
       console.log('✅ 已创建超级管理员用户: ' + ADMIN_NICKNAME + ' (好友码: ' + DEFAULT_FRIEND_CODE + ')')
     } else {
-      // 强制更新管理员的头像，确保路径正确
-      console.log('🔧 更新前管理员头像:', adminUser.avatar)
-      // 清理重复的 .jpg 后缀
-      let cleanAvatar = '/uploads/admin-avatar.jpg'
-      if (cleanAvatar.endsWith('.jpg.jpg')) {
-        cleanAvatar = cleanAvatar.replace('.jpg.jpg', '.jpg')
-      }
-      adminUser.avatar = cleanAvatar
+      // 强制更新管理员的头像为 base64 编码
+      console.log('🔧 更新前管理员头像:', adminUser.avatar.substring(0, 50) + '...')
+      adminUser.avatar = adminAvatarBase64
       await adminUser.save()
-      console.log('✅ 已更新超级管理员头像为:', adminUser.avatar)
+      console.log('✅ 已更新超级管理员头像为 base64 编码')
 
       // 重新查询确认
       const updatedUser = await User.findOne({ username: ADMIN_USERNAME })
-      console.log('🔍 重新查询后的头像:', updatedUser.avatar)
+      console.log('🔍 重新查询后的头像:', updatedUser.avatar.substring(0, 50) + '...')
       console.log('✅ 超级管理员用户已存在')
     }
 
