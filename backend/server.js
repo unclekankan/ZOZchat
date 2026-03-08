@@ -16,7 +16,7 @@ const Group = require('./models/Group')
 
 const app = express()
 const PORT = process.env.PORT || 3000
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chat'
+const MONGODB_URI = process.env.MONGODB_URI || ''
 const NODE_ENV = process.env.NODE_ENV || 'development'
 
 const DEFAULT_GROUP_INVITE_CODE = '6FC693'
