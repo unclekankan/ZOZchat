@@ -964,47 +964,51 @@ export default {
         return
       }
       
-      const formData = new FormData()
-      formData.append('image', file)
-      
-      try {
-        const token = localStorage.getItem('token')
-        let url = ''
-        
-        if (this.currentGroup) {
-          url = `/api/messages/${this.currentGroup._id}/image`
-        } else if (this.currentFriend) {
-          url = `/api/private-messages/${this.currentFriend._id}/image`
+      // 将图片转换为 base64 编码
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        try {
+          const token = localStorage.getItem('token')
+          let url = ''
+          
+          if (this.currentGroup) {
+            url = `/api/messages/${this.currentGroup._id}/image`
+          } else if (this.currentFriend) {
+            url = `/api/private-messages/${this.currentFriend._id}/image`
+          }
+          
+          console.log('发送图片请求到:', url)
+          console.log('上传的图片 base64 长度:', e.target.result.length)
+          
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ image: e.target.result })
+          })
+          
+          console.log('图片上传响应状态:', response.status)
+          
+          if (response.ok) {
+            const data = await response.json()
+            console.log('图片上传成功:', data)
+            await this.loadMessages()
+          } else {
+            const error = await response.json()
+            console.error('图片上传失败:', error)
+            alert(error.message || '发送图片失败')
+          }
+        } catch (error) {
+          console.error('发送图片失败:', error)
+          alert('发送图片失败，请稍后重试')
         }
         
-        console.log('发送图片请求到:', url)
-        console.log('上传的文件:', file)
-        
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
-        })
-        
-        console.log('图片上传响应状态:', response.status)
-        
-        if (response.ok) {
-          const data = await response.json()
-          console.log('图片上传成功:', data)
-          await this.loadMessages()
-        } else {
-          const error = await response.json()
-          console.error('图片上传失败:', error)
-          alert(error.message || '发送图片失败')
-        }
-      } catch (error) {
-        console.error('发送图片失败:', error)
-        alert('发送图片失败，请稍后重试')
+        event.target.value = ''
       }
       
-      event.target.value = ''
+      reader.readAsDataURL(file)
     },
     
     previewImage(url) {
