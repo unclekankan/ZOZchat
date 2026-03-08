@@ -37,7 +37,7 @@
             v-for="friend in friends" 
             :key="friend._id"
             class="friend-item"
-            :class="{ active: currentFriend?._id === friend._id }"
+            :class="{ active: currentFriend?._id === friend._id, pinned: isPinned('friend', friend._id) }"
             @click="selectFriend(friend)"
           >
             <img 
@@ -51,6 +51,17 @@
                 {{ friend.isOnline ? '在线' : '离线' }}
               </div>
             </div>
+            <div class="friend-actions">
+              <button 
+                class="pin-btn" 
+                @click.stop="togglePinItem('friend', friend._id)"
+                :class="{ active: isPinned('friend', friend._id) }"
+                title="置顶好友"
+              >
+                📌
+              </button>
+            </div>
+            <span v-if="unreadCount[friend._id] > 0" class="unread-dot"></span>
           </div>
         </div>
       </div>
@@ -76,7 +87,7 @@
             v-for="group in groups" 
             :key="group._id"
             class="group-item"
-            :class="{ active: currentGroup?._id === group._id && !currentFriend }"
+            :class="{ active: currentGroup?._id === group._id && !currentFriend, pinned: isPinned('group', group._id) }"
             @click="selectGroup(group)"
           >
             <img 
@@ -88,6 +99,17 @@
               <div class="group-name">{{ group.name }}</div>
               <div class="group-preview">{{ group.lastMessage || '暂无消息' }}</div>
             </div>
+            <div class="group-actions">
+              <button 
+                class="pin-btn" 
+                @click.stop="togglePinItem('group', group._id)"
+                :class="{ active: isPinned('group', group._id) }"
+                title="置顶群组"
+              >
+                📌
+              </button>
+            </div>
+            <span v-if="unreadCount[group._id] > 0" class="unread-dot"></span>
           </div>
         </div>
       </div>
@@ -626,7 +648,12 @@ export default {
         description: '',
         avatar: ''
       },
-      isSendingMessage: false
+      isSendingMessage: false,
+      unreadCount: {}, // 未读消息计数
+      pinnedItems: { // 置顶的项目
+        friends: [],
+        groups: []
+      }
     }
   },
   computed: {
@@ -645,8 +672,9 @@ export default {
     this.loadFriends()
     this.loadFriendRequests()
     this.loadMyFriendCode()
+    this.loadPinnedItems()
+    this.loadUnreadCounts()
     this.startHeartbeat()
-    
     document.addEventListener('mousemove', this.handleResize)
     document.addEventListener('mouseup', this.stopResize)
     document.addEventListener('touchmove', this.handleResize)
@@ -678,6 +706,76 @@ export default {
         this.sendHeartbeat()
         this.loadFriends()
       }, 30000)
+    },
+    
+    loadPinnedItems() {
+      // 从localStorage加载置顶项目
+      try {
+        const savedPinned = localStorage.getItem('pinnedItems')
+        if (savedPinned) {
+          this.pinnedItems = JSON.parse(savedPinned)
+        }
+      } catch (error) {
+        console.error('加载置顶项目失败:', error)
+      }
+    },
+    
+    savePinnedItems() {
+      // 保存置顶项目到localStorage
+      try {
+        localStorage.setItem('pinnedItems', JSON.stringify(this.pinnedItems))
+      } catch (error) {
+        console.error('保存置顶项目失败:', error)
+      }
+    },
+    
+    togglePinItem(type, itemId) {
+      // 切换项目的置顶状态
+      if (type === 'friend') {
+        const index = this.pinnedItems.friends.indexOf(itemId)
+        if (index > -1) {
+          this.pinnedItems.friends.splice(index, 1)
+        } else {
+          this.pinnedItems.friends.push(itemId)
+        }
+      } else if (type === 'group') {
+        const index = this.pinnedItems.groups.indexOf(itemId)
+        if (index > -1) {
+          this.pinnedItems.groups.splice(index, 1)
+        } else {
+          this.pinnedItems.groups.push(itemId)
+        }
+      }
+      this.savePinnedItems()
+    },
+    
+    isPinned(type, itemId) {
+      // 检查项目是否已置顶
+      if (type === 'friend') {
+        return this.pinnedItems.friends.includes(itemId)
+      } else if (type === 'group') {
+        return this.pinnedItems.groups.includes(itemId)
+      }
+      return false
+    },
+    
+    async loadUnreadCounts() {
+      // 加载未读消息计数
+      try {
+        const token = localStorage.getItem('token')
+        const response = await fetch('/api/messages/unread', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          this.unreadCount = data
+        }
+      } catch (error) {
+        console.error('加载未读消息计数失败:', error)
+      }
     },
     
     async sendHeartbeat() {
@@ -721,21 +819,41 @@ export default {
         })
         
         if (response.ok) {
-          this.groups = await response.json()
+          let groups = await response.json()
+          
+          // 检查并默认置顶"堪堪大群"
+          const defaultGroup = groups.find(g => g.name === '堪堪大群')
+          if (defaultGroup && !this.pinnedItems.groups.includes(defaultGroup._id)) {
+            this.pinnedItems.groups.push(defaultGroup._id)
+            this.savePinnedItems()
+          }
+          
+          // 按置顶状态和最后消息时间排序
+          groups.sort((a, b) => {
+            // 置顶的群组排在前面
+            const aPinned = this.isPinned('group', a._id)
+            const bPinned = this.isPinned('group', b._id)
+            if (aPinned && !bPinned) return -1
+            if (!aPinned && bPinned) return 1
+            
+            // 有最后消息的排在前面
+            const aTime = a.lastMessageTime ? new Date(a.lastMessageTime) : new Date(0)
+            const bTime = b.lastMessageTime ? new Date(b.lastMessageTime) : new Date(0)
+            return bTime - aTime
+          })
+          
+          this.groups = groups
           
           // 检查是否需要自动进入默认群组（移动端）
           const shouldAutoJoin = localStorage.getItem('autoJoinDefaultGroup') === 'true'
           
           if (shouldAutoJoin && this.groups.length > 0) {
-            // 查找名为"堪堪大群"的群组
-            const defaultGroup = this.groups.find(g => g.name === '堪堪大群')
-            if (defaultGroup) {
-              this.selectGroup(defaultGroup)
-              // 清除标记
-              localStorage.removeItem('autoJoinDefaultGroup')
-            } else if (!this.currentGroup) {
-              // 如果没有找到默认群组，选择第一个群组
-              this.selectGroup(this.groups[0])
+            // 移动端首次登录：只加载数据，不自动进入聊天页面，保持显示列表
+            // 清除标记
+            localStorage.removeItem('autoJoinDefaultGroup')
+            // 移动端首次进入时，确保侧边栏打开显示列表
+            if (window.innerWidth <= 768) {
+              this.sidebarOpen = true
             }
           } else if (this.groups.length > 0 && !this.currentGroup) {
             // 桌面端或非首次登录，选择第一个群组
@@ -901,7 +1019,23 @@ export default {
         })
         
         if (response.ok) {
-          this.friends = await response.json()
+          let friends = await response.json()
+          
+          // 按置顶状态和最后消息时间排序
+          friends.sort((a, b) => {
+            // 置顶的好友排在前面
+            const aPinned = this.isPinned('friend', a._id)
+            const bPinned = this.isPinned('friend', b._id)
+            if (aPinned && !bPinned) return -1
+            if (!aPinned && bPinned) return 1
+            
+            // 有最后消息的排在前面
+            const aTime = a.lastMessageTime ? new Date(a.lastMessageTime) : new Date(0)
+            const bTime = b.lastMessageTime ? new Date(b.lastMessageTime) : new Date(0)
+            return bTime - aTime
+          })
+          
+          this.friends = friends
         }
       } catch (error) {
         console.error('加载好友列表失败:', error)
@@ -3317,6 +3451,73 @@ export default {
 
 .friend-status.offline {
   color: #95a5a6;
+}
+
+.friend-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.unread-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  background-color: #ff4757;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(255, 71, 87, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 71, 87, 0);
+  }
+}
+
+.pin-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+  padding: 2px;
+}
+
+.pin-btn:hover {
+  opacity: 1;
+}
+
+.pin-btn.active {
+  opacity: 1;
+  color: #f39c12;
+}
+
+.friend-item.pinned {
+  background-color: rgba(243, 156, 18, 0.1);
+  border-left: 3px solid #f39c12;
+}
+
+.group-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.group-item.pinned {
+  background-color: rgba(243, 156, 18, 0.1);
+  border-left: 3px solid #f39c12;
 }
 
 .friend-status.offline::before {

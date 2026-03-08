@@ -128,4 +128,15 @@ router.put('/:id/recall', auth, async (req, res) => {
   }
 })
 
+// 获取未读消息计数
+router.get('/unread', auth, async (req, res) => {
+  try {
+    // 这里简化处理，返回空对象
+    // 实际应用中应该根据消息的已读状态来计算
+    res.json({})
+  } catch (error) {
+    res.status(500).json({ message: '服务器错误' })
+  }
+})
+
 module.exports = router

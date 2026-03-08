@@ -44,18 +44,18 @@ const groupSchema = new mongoose.Schema({
 })
 
 // 生成唯一邀请码的方法
-groupSchema.methods.generateInviteCode = function() {
+groupSchema.methods.generateInviteCode = function () {
   // 生成6位随机字母数字组合
   const code = crypto.randomBytes(3).toString('hex').toUpperCase()
   return code
 }
 
 // 保存前自动生成邀请码
-groupSchema.pre('save', async function(next) {
+groupSchema.pre('save', async function (next) {
   if (this.isNew && !this.inviteCode) {
     let code = this.generateInviteCode()
     let exists = true
-    
+
     // 确保邀请码唯一
     while (exists) {
       const existingGroup = await this.constructor.findOne({ inviteCode: code })
@@ -65,7 +65,7 @@ groupSchema.pre('save', async function(next) {
         code = this.generateInviteCode()
       }
     }
-    
+
     this.inviteCode = code
   }
   next()
