@@ -940,8 +940,15 @@ export default {
       }
       // 确保 /uploads 路径的图片使用正确的 URL
       if (url.startsWith('/uploads')) {
-        // 使用相对路径，这样在任何环境中都能正常工作
-        return url
+        // 判断当前环境，使用正确的后端 URL
+        const isProduction = window.location.hostname !== 'localhost'
+        if (isProduction) {
+          // 生产环境：使用当前域名（前端和后端在同一域名下）
+          return url
+        } else {
+          // 开发环境：使用后端服务器的 URL
+          return 'http://localhost:3000' + url
+        }
       }
       return url
     },
