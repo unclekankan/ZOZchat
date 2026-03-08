@@ -230,25 +230,65 @@
           <button class="close-btn" @click="closeUserModal">&times;</button>
         </div>
         <div class="modal-body" v-if="selectedUser">
-          <div class="profile-avatar">
-            <img :src="selectedUser.avatar || '/default-avatar.png'" alt="用户头像">
+          <!-- 查看模式 -->
+          <div v-if="!isEditingProfile" class="profile-view">
+            <div class="profile-avatar">
+              <img :src="selectedUser.avatar || '/default-avatar.png'" alt="用户头像">
+            </div>
+            <div class="profile-info">
+              <div class="profile-item">
+                <label>用户名:</label>
+                <span>{{ selectedUser.username }}</span>
+              </div>
+              <div class="profile-item">
+                <label>昵称:</label>
+                <span>{{ selectedUser.nickname || '未设置' }}</span>
+              </div>
+              <div class="profile-item">
+                <label>邮箱:</label>
+                <span>{{ selectedUser.email || '未设置' }}</span>
+              </div>
+              <div class="profile-item">
+                <label>个人简介:</label>
+                <p class="bio-text">{{ selectedUser.bio || '这个人很懒，什么都没写...' }}</p>
+              </div>
+            </div>
+            <!-- 编辑按钮 -->
+            <button v-if="selectedUser._id === currentUser?._id" class="edit-profile-btn" @click="startEditProfile">
+              编辑资料
+            </button>
           </div>
-          <div class="profile-info">
-            <div class="profile-item">
-              <label>用户名:</label>
-              <span>{{ selectedUser.username }}</span>
+          
+          <!-- 编辑模式 -->
+          <div v-else class="profile-edit">
+            <div class="profile-avatar-edit">
+              <img :src="editProfileForm.avatar || '/default-avatar.png'" alt="用户头像">
+              <button class="change-avatar-btn" @click="triggerAvatarUpload">更换头像</button>
+              <input 
+                type="file" 
+                ref="avatarInput" 
+                accept="image/*" 
+                @change="handleAvatarUpload"
+                style="display: none"
+              >
             </div>
-            <div class="profile-item">
-              <label>昵称:</label>
-              <span>{{ selectedUser.nickname || '未设置' }}</span>
+            <div class="profile-info">
+              <div class="form-group">
+                <label>昵称:</label>
+                <input type="text" v-model="editProfileForm.nickname" placeholder="请输入昵称">
+              </div>
+              <div class="form-group">
+                <label>邮箱:</label>
+                <input type="email" v-model="editProfileForm.email" placeholder="请输入邮箱">
+              </div>
+              <div class="form-group">
+                <label>个人简介:</label>
+                <textarea v-model="editProfileForm.bio" placeholder="介绍一下自己..." rows="3"></textarea>
+              </div>
             </div>
-            <div class="profile-item">
-              <label>邮箱:</label>
-              <span>{{ selectedUser.email || '未设置' }}</span>
-            </div>
-            <div class="profile-item">
-              <label>个人简介:</label>
-              <p class="bio-text">{{ selectedUser.bio || '这个人很懒，什么都没写...' }}</p>
+            <div class="profile-edit-actions">
+              <button class="cancel-btn" @click="cancelEditProfile">取消</button>
+              <button class="save-btn" @click="saveProfile">保存</button>
             </div>
           </div>
         </div>
@@ -521,7 +561,14 @@ export default {
       startFriendsFlex: 0,
       startGroupsFlex: 0,
       heartbeatInterval: null,
-      sidebarOpen: false
+      sidebarOpen: false,
+      isEditingProfile: false,
+      editProfileForm: {
+        nickname: '',
+        email: '',
+        bio: '',
+        avatar: ''
+      }
     }
   },
   computed: {
@@ -1050,6 +1097,71 @@ export default {
     closeUserModal() {
       this.showUserModal = false
       this.selectedUser = null
+      this.isEditingProfile = false
+    },
+    
+    startEditProfile() {
+      if (!this.currentUser) return
+      this.isEditingProfile = true
+      this.editProfileForm = {
+        nickname: this.currentUser.nickname || '',
+        email: this.currentUser.email || '',
+        bio: this.currentUser.bio || '',
+        avatar: this.currentUser.avatar || ''
+      }
+    },
+    
+    cancelEditProfile() {
+      this.isEditingProfile = false
+      this.editProfileForm = {
+        nickname: '',
+        email: '',
+        bio: '',
+        avatar: ''
+      }
+    },
+    
+    triggerAvatarUpload() {
+      this.$refs.avatarInput.click()
+    },
+    
+    handleAvatarUpload(event) {
+      const file = event.target.files[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          this.editProfileForm.avatar = e.target.result
+        }
+        reader.readAsDataURL(file)
+      }
+    },
+    
+    async saveProfile() {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await fetch('/api/auth/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(this.editProfileForm)
+        })
+        
+        if (response.ok) {
+          const updatedUser = await response.json()
+          this.currentUser = updatedUser
+          this.selectedUser = updatedUser
+          this.isEditingProfile = false
+          alert('资料更新成功！')
+        } else {
+          const error = await response.json()
+          alert(error.message || '更新失败')
+        }
+      } catch (error) {
+        console.error('更新资料失败:', error)
+        alert('更新失败，请稍后重试')
+      }
     },
     
     showJoinGroupModal() {
@@ -1537,6 +1649,32 @@ export default {
   }
   
   .create-btn {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .edit-profile-btn {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .profile-avatar-edit img {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .change-avatar-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .profile-edit .form-group input,
+  .profile-edit .form-group textarea {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .profile-edit-actions button {
     padding: 10px;
     font-size: 14px;
   }
@@ -2179,6 +2317,129 @@ export default {
   color: #333;
   line-height: 1.5;
   margin: 0;
+}
+
+/* 编辑资料按钮 */
+.edit-profile-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.edit-profile-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* 编辑资料模式 */
+.profile-avatar-edit {
+  text-align: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.profile-avatar-edit img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #667eea;
+}
+
+.change-avatar-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.change-avatar-btn:hover {
+  background: #764ba2;
+  transform: scale(1.05);
+}
+
+.profile-edit .form-group {
+  margin-bottom: 15px;
+}
+
+.profile-edit .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+  font-size: 14px;
+}
+
+.profile-edit .form-group input,
+.profile-edit .form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.profile-edit .form-group input:focus,
+.profile-edit .form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.profile-edit .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.profile-edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.profile-edit-actions button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
 /* 创建群组弹窗 */
