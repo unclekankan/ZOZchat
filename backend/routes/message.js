@@ -78,20 +78,21 @@ router.post('/:groupId', auth, async (req, res) => {
   }
 })
 
-router.post('/:groupId/image', auth, upload.single('image'), async (req, res) => {
+router.post('/:groupId/image', auth, async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.body.image) {
       return res.status(400).json({ message: '请上传图片' })
     }
 
-    const imageUrl = `/uploads/${req.file.filename}`
+    // 处理 base64 编码的图片
+    const imageData = req.body.image
     const message = new Message({
       userId: req.user.userId,
       username: req.user.username,
       groupId: req.params.groupId,
       content: '[图片]',
       messageType: 'image',
-      imageUrl
+      imageUrl: imageData // 直接存储 base64 编码的图片数据
     })
     await message.save()
     await message.populate('userId', 'username nickname avatar')

@@ -6,7 +6,7 @@ const Friendship = require('../models/Friendship')
 const jwt = require('jsonwebtoken')
 
 const DEFAULT_GROUP_INVITE_CODE = '6FC693'
-const DEFAULT_FRIEND_CODE = 'TU2O3B'
+const DEFAULT_FRIEND_CODE = 'ADMIN666'
 
 // JWT验证中间件
 const auth = (req, res, next) => {
@@ -73,7 +73,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id, username: user.username },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin },
       'secret_key',
       { expiresIn: '1h' }
     )

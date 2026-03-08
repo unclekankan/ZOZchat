@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
   }
 })
 
-const upload = multer({ 
+const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
@@ -55,9 +55,9 @@ router.get('/:friendId', auth, async (req, res) => {
         { senderId: req.params.friendId, recipientId: req.user.userId }
       ]
     })
-    .populate('senderId', 'username nickname avatar')
-    .populate('recipientId', 'username nickname avatar')
-    .sort({ createdAt: 1 })
+      .populate('senderId', 'username nickname avatar')
+      .populate('recipientId', 'username nickname avatar')
+      .sort({ createdAt: 1 })
 
     res.json(messages)
   } catch (error) {
@@ -89,19 +89,20 @@ router.post('/:friendId', auth, async (req, res) => {
   }
 })
 
-router.post('/:friendId/image', auth, upload.single('image'), async (req, res) => {
+router.post('/:friendId/image', auth, async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.body.image) {
       return res.status(400).json({ message: '请上传图片' })
     }
 
-    const imageUrl = `/uploads/${req.file.filename}`
+    // 处理 base64 编码的图片
+    const imageData = req.body.image
     const message = new PrivateMessage({
       senderId: req.user.userId,
       recipientId: req.params.friendId,
       content: '[图片]',
       messageType: 'image',
-      imageUrl
+      imageUrl: imageData // 直接存储 base64 编码的图片数据
     })
 
     await message.save()
