@@ -46,6 +46,10 @@ router.post('/register', async (req, res) => {
     await user.save()
 
     console.log('用户注册成功:', username)
+
+    // 自动加入默认群组
+    await autoJoinDefaultGroup(user._id)
+
     res.status(201).json({ message: '注册成功' })
   } catch (error) {
     console.error('注册错误:', error)

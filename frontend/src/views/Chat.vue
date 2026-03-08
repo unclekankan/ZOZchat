@@ -664,7 +664,23 @@ export default {
         
         if (response.ok) {
           this.groups = await response.json()
-          if (this.groups.length > 0 && !this.currentGroup) {
+          
+          // 检查是否需要自动进入默认群组（移动端）
+          const shouldAutoJoin = localStorage.getItem('autoJoinDefaultGroup') === 'true'
+          
+          if (shouldAutoJoin && this.groups.length > 0) {
+            // 查找名为"堪堪大群"的群组
+            const defaultGroup = this.groups.find(g => g.name === '堪堪大群')
+            if (defaultGroup) {
+              this.selectGroup(defaultGroup)
+              // 清除标记
+              localStorage.removeItem('autoJoinDefaultGroup')
+            } else if (!this.currentGroup) {
+              // 如果没有找到默认群组，选择第一个群组
+              this.selectGroup(this.groups[0])
+            }
+          } else if (this.groups.length > 0 && !this.currentGroup) {
+            // 桌面端或非首次登录，选择第一个群组
             this.selectGroup(this.groups[0])
           }
         }

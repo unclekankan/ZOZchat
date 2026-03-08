@@ -208,6 +208,10 @@ export default {
         if (response.ok) {
           const data = await response.json()
           localStorage.setItem('token', data.token)
+          // 移动端标记，用于自动进入默认群组
+          if (window.innerWidth <= 768) {
+            localStorage.setItem('autoJoinDefaultGroup', 'true')
+          }
           this.$router.push('/chat')
         } else {
           let errorMessage = '登录失败，请检查用户名和密码'

@@ -186,19 +186,26 @@ async function initializeDefaultData() {
     let defaultGroup = await Group.findOne({ inviteCode: DEFAULT_GROUP_INVITE_CODE })
     if (!defaultGroup) {
       defaultGroup = new Group({
-        name: '公共聊天室',
+        name: '堪堪大群',
         description: '欢迎所有用户加入的公共聊天室',
         inviteCode: DEFAULT_GROUP_INVITE_CODE,
-        admin: adminUser._id,
+        creator: adminUser._id,
         members: [{
           user: adminUser._id,
           role: 'admin'
         }]
       })
       await defaultGroup.save()
-      console.log('✅ 已创建默认群组: 公共聊天室 (邀请码: ' + DEFAULT_GROUP_INVITE_CODE + ')')
+      console.log('✅ 已创建默认群组: 堪堪大群 (邀请码: ' + DEFAULT_GROUP_INVITE_CODE + ')')
     } else {
-      console.log('✅ 默认群组已存在')
+      // 更新群组名称为"堪堪大群"
+      if (defaultGroup.name !== '堪堪大群') {
+        defaultGroup.name = '堪堪大群'
+        await defaultGroup.save()
+        console.log('✅ 已更新默认群组名称为: 堪堪大群')
+      } else {
+        console.log('✅ 默认群组已存在')
+      }
     }
   } catch (error) {
     console.error('初始化默认数据失败:', error)
