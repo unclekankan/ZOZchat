@@ -255,4 +255,38 @@ router.post('/:id/regenerate-code', auth, async (req, res) => {
   }
 })
 
+// 更新群组信息（仅管理员）
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { name, description, avatar } = req.body
+    const group = await Group.findById(req.params.id)
+
+    if (!group) {
+      return res.status(404).json({ message: '群组不存在' })
+    }
+
+    // 检查用户是否是管理员
+    const member = group.members.find(m =>
+      m.user.toString() === req.user.userId
+    )
+
+    if (!member || member.role !== 'admin') {
+      return res.status(403).json({ message: '只有管理员可以更新群组信息' })
+    }
+
+    // 更新群组信息
+    if (name) group.name = name
+    if (description !== undefined) group.description = description
+    if (avatar !== undefined) group.avatar = avatar
+
+    await group.save()
+    await group.populate('members.user', 'username nickname avatar')
+
+    res.json(group)
+  } catch (error) {
+    console.error('更新群组信息错误:', error)
+    res.status(500).json({ message: '服务器错误' })
+  }
+})
+
 module.exports = router

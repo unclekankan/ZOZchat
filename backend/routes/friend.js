@@ -33,10 +33,10 @@ router.get('/list', auth, async (req, res) => {
       const friend = f.requester._id.toString() === req.user.userId
         ? f.recipient
         : f.requester
-      
+
       const lastActive = friend.lastActive ? new Date(friend.lastActive) : null
       const isOnline = lastActive && (now - lastActive) < onlineThreshold
-      
+
       return {
         ...friend.toObject(),
         friendshipId: f._id,

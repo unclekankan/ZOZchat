@@ -384,47 +384,87 @@
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3>群组信息</h3>
-          <button class="close-btn" @click="closeGroupInfoModal">&times;</button>
+          <div class="header-actions">
+            <button v-if="isCurrentUserAdmin && !isEditingGroup" class="edit-btn" @click="startEditGroup">
+              编辑
+            </button>
+            <button class="close-btn" @click="closeGroupInfoModal">&times;</button>
+          </div>
         </div>
         <div class="modal-body" v-if="currentGroup">
-          <div class="group-info-header">
-            <img :src="currentGroup.avatar || '/default-group.png'" class="group-info-avatar" alt="群组头像">
-            <h4>{{ currentGroup.name }}</h4>
-            <p>{{ currentGroup.description || '暂无描述' }}</p>
-          </div>
-          
-          <!-- 邀请码区域 -->
-          <div class="invite-code-section">
-            <div class="invite-code-display">
-              <label>邀请码:</label>
-              <div class="code-box">
-                <span class="code">{{ currentGroup.inviteCode }}</span>
-                <button class="copy-btn" @click="copyInviteCode">复制</button>
+          <!-- 查看模式 -->
+          <div v-if="!isEditingGroup" class="group-info-view">
+            <div class="group-info-header">
+              <img :src="currentGroup.avatar || '/default-group.png'" class="group-info-avatar" alt="群组头像">
+              <h4>{{ currentGroup.name }}</h4>
+              <p>{{ currentGroup.description || '暂无描述' }}</p>
+            </div>
+            
+            <!-- 邀请码区域 -->
+            <div class="invite-code-section">
+              <div class="invite-code-display">
+                <label>邀请码:</label>
+                <div class="code-box">
+                  <span class="code">{{ currentGroup.inviteCode }}</span>
+                  <button class="copy-btn" @click="copyInviteCode">复制</button>
+                </div>
+              </div>
+              <p class="invite-tip">分享此邀请码给好友，让他们加入群组</p>
+              <button 
+                v-if="isCurrentUserAdmin" 
+                class="regenerate-btn"
+                @click="regenerateInviteCode"
+              >
+                重新生成邀请码
+              </button>
+            </div>
+            
+            <div class="group-members">
+              <h4>群组成员 ({{ currentGroup.members?.length || 0 }})</h4>
+              <div class="members-list">
+                <div 
+                  v-for="member in currentGroup.members" 
+                  :key="member.user._id"
+                  class="member-item"
+                  @click="showUserProfile(member.user)"
+                >
+                  <img :src="member.user.avatar || '/default-avatar.png'" alt="成员头像">
+                  <span class="member-name">{{ member.user.nickname || member.user.username }}</span>
+                  <span v-if="member.role === 'admin'" class="admin-badge">管理员</span>
+                </div>
               </div>
             </div>
-            <p class="invite-tip">分享此邀请码给好友，让他们加入群组</p>
-            <button 
-              v-if="isCurrentUserAdmin" 
-              class="regenerate-btn"
-              @click="regenerateInviteCode"
-            >
-              重新生成邀请码
-            </button>
           </div>
           
-          <div class="group-members">
-            <h4>群组成员 ({{ currentGroup.members?.length || 0 }})</h4>
-            <div class="members-list">
-              <div 
-                v-for="member in currentGroup.members" 
-                :key="member.user._id"
-                class="member-item"
-                @click="showUserProfile(member.user)"
-              >
-                <img :src="member.user.avatar || '/default-avatar.png'" alt="成员头像">
-                <span class="member-name">{{ member.user.nickname || member.user.username }}</span>
-                <span v-if="member.role === 'admin'" class="admin-badge">管理员</span>
+          <!-- 编辑模式 -->
+          <div v-else class="group-info-edit">
+            <div class="group-info-header">
+              <div class="group-avatar-edit">
+                <img :src="editGroupForm.avatar || '/default-group.png'" class="group-info-avatar" alt="群组头像">
+                <button class="change-avatar-btn" @click="triggerGroupAvatarUpload">更换头像</button>
+                <input 
+                  type="file" 
+                  ref="groupAvatarInput" 
+                  accept="image/*" 
+                  @change="handleGroupAvatarUpload"
+                  style="display: none"
+                >
               </div>
+            </div>
+            
+            <div class="form-group">
+              <label>群组名称:</label>
+              <input type="text" v-model="editGroupForm.name" placeholder="请输入群组名称">
+            </div>
+            
+            <div class="form-group">
+              <label>群组描述:</label>
+              <textarea v-model="editGroupForm.description" placeholder="请输入群组描述" rows="3"></textarea>
+            </div>
+            
+            <div class="edit-actions">
+              <button class="cancel-btn" @click="cancelEditGroup">取消</button>
+              <button class="save-btn" @click="saveGroupInfo">保存</button>
             </div>
           </div>
         </div>
@@ -567,6 +607,12 @@ export default {
         nickname: '',
         email: '',
         bio: '',
+        avatar: ''
+      },
+      isEditingGroup: false,
+      editGroupForm: {
+        name: '',
+        description: '',
         avatar: ''
       }
     }
@@ -1310,6 +1356,70 @@ export default {
     
     closeGroupInfoModal() {
       this.showGroupInfoModal = false
+      this.isEditingGroup = false
+    },
+    
+    startEditGroup() {
+      if (!this.currentGroup) return
+      this.isEditingGroup = true
+      this.editGroupForm = {
+        name: this.currentGroup.name || '',
+        description: this.currentGroup.description || '',
+        avatar: this.currentGroup.avatar || ''
+      }
+    },
+    
+    cancelEditGroup() {
+      this.isEditingGroup = false
+      this.editGroupForm = {
+        name: '',
+        description: '',
+        avatar: ''
+      }
+    },
+    
+    triggerGroupAvatarUpload() {
+      this.$refs.groupAvatarInput.click()
+    },
+    
+    handleGroupAvatarUpload(event) {
+      const file = event.target.files[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          this.editGroupForm.avatar = e.target.result
+        }
+        reader.readAsDataURL(file)
+      }
+    },
+    
+    async saveGroupInfo() {
+      if (!this.currentGroup) return
+      
+      try {
+        const token = localStorage.getItem('token')
+        const response = await fetch(`/api/groups/${this.currentGroup._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(this.editGroupForm)
+        })
+        
+        if (response.ok) {
+          const updatedGroup = await response.json()
+          this.currentGroup = updatedGroup
+          this.isEditingGroup = false
+          alert('群组信息更新成功！')
+        } else {
+          const error = await response.json()
+          alert(error.message || '更新失败')
+        }
+      } catch (error) {
+        console.error('更新群组信息失败:', error)
+        alert('更新失败，请稍后重试')
+      }
     },
     
     copyInviteCode() {
@@ -2385,6 +2495,293 @@ export default {
 .change-avatar-btn:hover {
   background: #764ba2;
   transform: scale(1.05);
+}
+
+/* 群组编辑模式样式 */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-btn {
+  padding: 6px 12px;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.edit-btn:hover {
+  background-color: #40a9ff;
+}
+
+.group-info-view {
+  /* 查看模式的样式 */
+}
+
+.group-info-edit {
+  /* 编辑模式的样式 */
+}
+
+.group-avatar-edit {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.group-avatar-edit .change-avatar-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: background-color 0.3s;
+  margin-top: 0;
+  padding: 0;
+}
+
+.group-avatar-edit .change-avatar-btn:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+  transform: none;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+.cancel-btn,
+.save-btn {
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.cancel-btn {
+  background-color: white;
+  color: #333;
+}
+
+.cancel-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.save-btn {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+}
+
+.save-btn:hover {
+  background-color: #40a9ff;
+  border-color: #40a9ff;
+}
+
+/* 群组信息样式 */
+.group-info-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.group-info-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+  border: 2px solid #e0e0e0;
+}
+
+.group-info-header h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.group-info-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.invite-code-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+}
+
+.invite-code-display {
+  margin-bottom: 10px;
+}
+
+.invite-code-display label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.code-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: white;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.code {
+  flex: 1;
+  font-family: monospace;
+  font-size: 16px;
+  color: #333;
+  word-break: break-all;
+}
+
+.copy-btn {
+  padding: 6px 12px;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.copy-btn:hover {
+  background-color: #40a9ff;
+}
+
+.invite-tip {
+  margin: 10px 0;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.4;
+}
+
+.regenerate-btn {
+  width: 100%;
+  padding: 8px;
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.regenerate-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.group-members {
+  margin-bottom: 20px;
+}
+
+.group-members h4 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.members-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.member-item:hover {
+  background-color: #f5f5f5;
+}
+
+.member-item img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.member-name {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.admin-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  background-color: #1890ff;
+  color: white;
+  border-radius: 10px;
 }
 
 .profile-edit .form-group {
