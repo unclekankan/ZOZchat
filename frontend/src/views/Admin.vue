@@ -50,6 +50,7 @@
               <p>邀请码: {{ group.inviteCode }}</p>
               <p>{{ group.description }}</p>
               <p>成员数: {{ group.members.length }}</p>
+              <p>创建者: {{ group.creator?.nickname || group.creator?.username }}</p>
               <p>创建时间: {{ formatDate(group.createdAt) }}</p>
             </div>
           </div>
@@ -65,12 +66,12 @@
         <div class="message-list">
           <div v-for="message in messages" :key="message._id" class="message-item">
             <div class="message-info">
-              <img :src="message.sender.avatar || '/default-avatar.png'" alt="Avatar" class="sender-avatar">
+              <img :src="message.userId?.avatar || '/default-avatar.png'" alt="Avatar" class="sender-avatar">
               <div class="message-details">
-                <h4>{{ message.sender.nickname || message.sender.username }}</h4>
+                <h4>{{ message.userId?.nickname || message.userId?.username }}</h4>
                 <p class="message-text">{{ message.content }}</p>
                 <p class="message-meta">
-                  群聊: {{ message.group.name }} | {{ formatDate(message.createdAt) }}
+                  群聊: {{ message.groupId?.name }} | {{ formatDate(message.createdAt) }}
                 </p>
               </div>
             </div>
@@ -87,9 +88,9 @@
         <div class="message-list">
           <div v-for="message in privateMessages" :key="message._id" class="message-item">
             <div class="message-info">
-              <img :src="message.sender.avatar || '/default-avatar.png'" alt="Avatar" class="sender-avatar">
+              <img :src="message.senderId?.avatar || '/default-avatar.png'" alt="Avatar" class="sender-avatar">
               <div class="message-details">
-                <h4>{{ message.sender.nickname || message.sender.username }} → {{ message.receiver.nickname || message.receiver.username }}</h4>
+                <h4>{{ message.senderId?.nickname || message.senderId?.username }} → {{ message.recipientId?.nickname || message.recipientId?.username }}</h4>
                 <p class="message-text">{{ message.content }}</p>
                 <p class="message-meta">
                   {{ formatDate(message.createdAt) }}
