@@ -335,6 +335,8 @@ export default {
   max-height: 90vh;
   overflow: hidden;
   transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .auth-card:hover {
@@ -346,6 +348,7 @@ export default {
   text-align: center;
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   color: white;
+  flex-shrink: 0;
 }
 
 .auth-header h2 {
@@ -386,6 +389,7 @@ export default {
   padding: 30px 40px;
   max-height: calc(90vh - 120px);
   overflow-y: auto;
+  flex: 1;
 }
 
 .form-group {
@@ -564,46 +568,51 @@ export default {
 @media (max-width: 768px) {
   .auth-container {
     flex-direction: column;
-    padding: 15px;
-    gap: 30px;
+    padding: 10px;
+    gap: 15px;
+    justify-content: flex-start;
+    padding-top: 20px;
   }
   
   .logo-section {
-    margin-bottom: 10px;
+    margin-bottom: 5px;
   }
   
   .logo-img {
-    width: 80px;
-    height: 80px;
-    padding: 10px;
-    margin-bottom: 15px;
+    width: 60px;
+    height: 60px;
+    padding: 8px;
+    margin-bottom: 10px;
   }
   
   .logo-text {
-    font-size: 32px;
+    font-size: 24px;
     letter-spacing: 1px;
   }
   
   .logo-tagline {
-    font-size: 14px;
+    font-size: 12px;
     letter-spacing: 2px;
-    margin-top: 8px;
+    margin-top: 5px;
   }
   
   .auth-card {
     width: 100%;
     max-width: 100%;
     border-radius: 12px;
-    max-height: calc(100vh - 200px);
+    max-height: calc(100vh - 180px);
+    display: flex;
+    flex-direction: column;
   }
   
   .auth-header {
-    padding: 20px 20px 15px;
+    padding: 15px 15px 10px;
+    flex-shrink: 0;
   }
   
   .auth-header h2 {
-    font-size: 22px;
-    margin-bottom: 15px;
+    font-size: 20px;
+    margin-bottom: 12px;
   }
   
   .auth-tabs {
@@ -611,55 +620,58 @@ export default {
   }
   
   .auth-tabs button {
-    padding: 8px 16px;
+    padding: 8px 14px;
     font-size: 13px;
   }
   
   .auth-form {
-    padding: 20px;
-    max-height: calc(100vh - 250px);
+    padding: 15px;
+    max-height: none;
+    overflow-y: auto;
+    flex: 1;
   }
   
   .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
   }
   
   .form-group label {
-    font-size: 13px;
-    margin-bottom: 6px;
+    font-size: 12px;
+    margin-bottom: 5px;
   }
   
   .form-group input,
   .form-group textarea {
-    padding: 10px 14px;
-    font-size: 14px;
+    padding: 8px 12px;
+    font-size: 13px;
   }
   
   .form-group textarea {
-    min-height: 70px;
+    min-height: 60px;
+    resize: vertical;
   }
   
   .avatar-section {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
   }
   
   .avatar-preview {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
   }
   
   .avatar-icon {
-    font-size: 20px;
+    font-size: 18px;
   }
   
   .avatar-placeholder span:last-child {
-    font-size: 11px;
+    font-size: 10px;
   }
   
   .auth-btn {
-    padding: 12px;
-    font-size: 15px;
-    margin-top: 8px;
+    padding: 10px;
+    font-size: 14px;
+    margin-top: 5px;
   }
 }
 
@@ -680,6 +692,16 @@ export default {
   
   .auth-card {
     width: 380px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .auth-header {
+    flex-shrink: 0;
+  }
+  
+  .auth-form {
+    flex: 1;
   }
 }
 </style>
