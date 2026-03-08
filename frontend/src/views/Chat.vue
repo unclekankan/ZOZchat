@@ -1,7 +1,7 @@
 <template>
   <div class="chat-container">
     <!-- 左侧边栏 -->
-    <div class="sidebar">
+    <div class="sidebar" :class="{ open: sidebarOpen }">
       <div class="sidebar-logo">
         <img src="/logo.jpg" alt="ZOZchat" class="sidebar-logo-img">
         <span class="sidebar-logo-text">ZOZchat</span>
@@ -96,8 +96,12 @@
       <button class="logout-btn" @click="handleLogout">退出</button>
     </div>
 
+    <!-- 移动端遮罩层 -->
+    <div class="sidebar-overlay" v-if="sidebarOpen" @click="toggleSidebar"></div>
+
     <div class="main-chat" v-if="currentGroup || currentFriend">
       <div class="chat-header">
+        <button class="mobile-menu-btn" @click="toggleSidebar">☰</button>
         <div class="chat-header-info">
           <img 
             v-if="currentGroup"
@@ -516,7 +520,8 @@ export default {
       startY: 0,
       startFriendsFlex: 0,
       startGroupsFlex: 0,
-      heartbeatInterval: null
+      heartbeatInterval: null,
+      sidebarOpen: false
     }
   },
   computed: {
@@ -626,6 +631,10 @@ export default {
       this.currentGroup = group
       await this.loadMessages()
       this.startPolling()
+      // 移动端关闭侧边栏
+      if (window.innerWidth <= 768) {
+        this.sidebarOpen = false
+      }
     },
     
     async selectFriend(friend) {
@@ -633,6 +642,10 @@ export default {
       this.currentFriend = friend
       await this.loadMessages()
       this.startPolling()
+      // 移动端关闭侧边栏
+      if (window.innerWidth <= 768) {
+        this.sidebarOpen = false
+      }
     },
     
     async loadMessages() {
@@ -1228,6 +1241,10 @@ export default {
       this.$router.push('/admin')
     },
     
+    toggleSidebar() {
+      this.sidebarOpen = !this.sidebarOpen
+    },
+    
     startResize(event) {
       this.isResizing = true
       this.startY = event.type === 'touchstart' ? event.touches[0].clientY : event.clientY
@@ -1297,6 +1314,272 @@ export default {
   display: flex;
   flex-direction: column;
   border-right: 1px solid #333;
+  position: relative;
+  z-index: 100;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .chat-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    left: -100%;
+    top: 0;
+    transition: left 0.3s ease;
+    z-index: 1000;
+  }
+  
+  .sidebar.open {
+    left: 0;
+  }
+  
+  .main-chat {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  
+  .mobile-menu-btn {
+    display: block;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #333;
+    cursor: pointer;
+    padding: 0 10px;
+  }
+  
+  .chat-header {
+    padding: 10px 15px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  
+  .chat-messages {
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .message-content {
+    max-width: 85%;
+  }
+  
+  .chat-input-area {
+    padding: 10px;
+  }
+  
+  .message-input {
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+  
+  .send-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .modal-content {
+    width: 90%;
+    max-width: 400px;
+  }
+  
+  .sidebar-logo-text {
+    font-size: 16px;
+  }
+  
+  .user-info {
+    padding: 15px;
+  }
+  
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .section-header {
+    padding: 10px 15px;
+  }
+  
+  .section-header h3 {
+    font-size: 14px;
+  }
+  
+  .group-item, .friend-item {
+    padding: 8px;
+  }
+  
+  .group-avatar, .friend-avatar {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .group-name, .friend-name {
+    font-size: 14px;
+  }
+  
+  .group-preview, .friend-status {
+    font-size: 11px;
+  }
+  
+  .admin-btn, .logout-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    margin: 8px auto 4px auto;
+  }
+  
+  .join-group-btn, .create-group-btn, .add-friend-btn, .friend-requests-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+  }
+  
+  .user-friend-code {
+    font-size: 11px;
+  }
+  
+  .code-value {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+  
+  .copy-code-btn {
+    font-size: 10px;
+  }
+  
+  .chat-group-details h3 {
+    font-size: 14px;
+  }
+  
+  .member-count {
+    font-size: 11px;
+  }
+  
+  .group-info-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .message-avatar {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .message-bubble {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .message-sender {
+    font-size: 11px;
+  }
+  
+  .message-time {
+    font-size: 10px;
+  }
+  
+  .recall-btn {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+  
+  .invite-code-input {
+    font-size: 20px;
+    letter-spacing: 6px;
+  }
+  
+  .found-group-info img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .found-group-details h4 {
+    font-size: 14px;
+  }
+  
+  .found-group-details p {
+    font-size: 13px;
+  }
+  
+  .join-btn, .already-member-btn {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .profile-avatar img {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .modal-header {
+    padding: 15px;
+  }
+  
+  .modal-header h3 {
+    font-size: 16px;
+  }
+  
+  .modal-body {
+    padding: 15px;
+  }
+  
+  .form-group input,
+  .form-group textarea {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .create-btn {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+/* 平板设备适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    width: 250px;
+  }
+  
+  .chat-messages {
+    padding: 15px;
+  }
+  
+  .message-content {
+    max-width: 75%;
+  }
+}
+
+/* 桌面设备 */
+@media (min-width: 1025px) {
+  .mobile-menu-btn {
+    display: none;
+  }
+}
+
+/* 移动端遮罩层 */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+@media (max-width: 768px) {
+  .sidebar-overlay {
+    display: block;
+  }
 }
 
 .sidebar-logo {
@@ -1564,6 +1847,9 @@ export default {
   padding: 15px 20px;
   border-bottom: 1px solid #e0e0e0;
   background-color: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .chat-header-info {
@@ -2134,6 +2420,8 @@ export default {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 100;
   max-width: 320px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .emoji-grid {
@@ -2149,10 +2437,36 @@ export default {
   border-radius: 4px;
   text-align: center;
   transition: background-color 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .emoji-item:hover {
   background-color: #f0f0f0;
+}
+
+/* 移动端emoji选择器适配 */
+@media (max-width: 768px) {
+  .emoji-picker {
+    max-width: 100%;
+    left: -10px;
+    right: -10px;
+    width: auto;
+    max-height: 250px;
+  }
+  
+  .emoji-grid {
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+  }
+  
+  .emoji-item {
+    font-size: 18px;
+    padding: 3px;
+  }
 }
 
 .message-image {

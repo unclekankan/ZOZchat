@@ -559,4 +559,127 @@ export default {
 ::-webkit-scrollbar-thumb:hover {
   background: #764ba2;
 }
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .auth-container {
+    flex-direction: column;
+    padding: 15px;
+    gap: 30px;
+  }
+  
+  .logo-section {
+    margin-bottom: 10px;
+  }
+  
+  .logo-img {
+    width: 80px;
+    height: 80px;
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .logo-text {
+    font-size: 32px;
+    letter-spacing: 1px;
+  }
+  
+  .logo-tagline {
+    font-size: 14px;
+    letter-spacing: 2px;
+    margin-top: 8px;
+  }
+  
+  .auth-card {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+    max-height: calc(100vh - 200px);
+  }
+  
+  .auth-header {
+    padding: 20px 20px 15px;
+  }
+  
+  .auth-header h2 {
+    font-size: 22px;
+    margin-bottom: 15px;
+  }
+  
+  .auth-tabs {
+    gap: 8px;
+  }
+  
+  .auth-tabs button {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .auth-form {
+    padding: 20px;
+    max-height: calc(100vh - 250px);
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  
+  .form-group input,
+  .form-group textarea {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  
+  .form-group textarea {
+    min-height: 70px;
+  }
+  
+  .avatar-section {
+    margin-bottom: 20px;
+  }
+  
+  .avatar-preview {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .avatar-icon {
+    font-size: 20px;
+  }
+  
+  .avatar-placeholder span:last-child {
+    font-size: 11px;
+  }
+  
+  .auth-btn {
+    padding: 12px;
+    font-size: 15px;
+    margin-top: 8px;
+  }
+}
+
+/* 平板设备适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .auth-container {
+    gap: 40px;
+  }
+  
+  .logo-img {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .logo-text {
+    font-size: 40px;
+  }
+  
+  .auth-card {
+    width: 380px;
+  }
+}
 </style>

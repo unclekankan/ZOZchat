@@ -225,6 +225,22 @@ export default {
   gap: 10px;
   margin-bottom: 30px;
   flex-wrap: wrap;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.admin-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.admin-tabs::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.admin-tabs::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
 }
 
 .tab-btn {
@@ -236,6 +252,7 @@ export default {
   cursor: pointer;
   font-size: 14px;
   transition: all 0.3s;
+  white-space: nowrap;
 }
 
 .tab-btn:hover {
@@ -289,6 +306,7 @@ export default {
   border-radius: 50%;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
 }
 
 .user-details h3 {
@@ -332,18 +350,21 @@ export default {
 .message-details h4 {
   margin: 0 0 5px 0;
   font-size: 14px;
+  word-break: break-word;
 }
 
 .message-text {
   margin: 5px 0;
   font-size: 14px;
   line-height: 1.4;
+  word-break: break-word;
 }
 
 .message-meta {
   margin: 5px 0 0 0;
   font-size: 12px;
   opacity: 0.7;
+  word-break: break-word;
 }
 
 .empty-state {
@@ -376,6 +397,108 @@ export default {
 @media (max-width: 768px) {
   .admin-container {
     padding: 10px;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .admin-header {
+    margin-bottom: 20px;
+  }
+  
+  .admin-header h1 {
+    font-size: 20px;
+  }
+  
+  .back-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+  
+  .admin-tabs {
+    margin-bottom: 20px;
+    gap: 8px;
+  }
+  
+  .tab-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+  
+  .admin-content {
+    padding: 15px;
+    height: calc(100vh - 150px);
+  }
+  
+  .tab-content h2 {
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+  
+  .user-item, .group-item, .message-item {
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .user-info, .message-info {
+    gap: 10px;
+  }
+  
+  .user-avatar, .sender-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .user-details h3 {
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+  
+  .user-details p {
+    font-size: 12px;
+    margin: 2px 0;
+  }
+  
+  .admin-badge {
+    font-size: 11px;
+    padding: 1px 6px;
+    margin-top: 3px;
+  }
+  
+  .group-info h3 {
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+  
+  .group-info p {
+    font-size: 12px;
+    margin: 2px 0;
+  }
+  
+  .message-details h4 {
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+  
+  .message-text {
+    font-size: 12px;
+    margin: 3px 0;
+  }
+  
+  .message-meta {
+    font-size: 10px;
+    margin-top: 3px;
+  }
+  
+  .empty-state {
+    padding: 30px;
+    font-size: 14px;
+  }
+}
+
+/* 平板设备适配 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .admin-container {
+    padding: 15px;
   }
   
   .admin-header h1 {
@@ -383,8 +506,7 @@ export default {
   }
   
   .tab-btn {
-    padding: 10px 16px;
-    font-size: 12px;
+    padding: 10px 20px;
   }
   
   .admin-content {
