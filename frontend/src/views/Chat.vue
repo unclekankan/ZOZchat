@@ -8,7 +8,7 @@
       </div>
       <div class="user-info" @click="showUserProfile(currentUser)">
         <img 
-          :src="currentUser?.avatar || '/default-avatar.png'" 
+          :src="getImageUrl(currentUser?.avatar) || '/default-avatar.png'" 
           class="user-avatar"
           alt="用户头像"
         >
@@ -41,7 +41,7 @@
             @click="selectFriend(friend)"
           >
             <img 
-              :src="friend.avatar || '/default-avatar.png'" 
+              :src="getImageUrl(friend.avatar) || '/default-avatar.png'" 
               class="friend-avatar"
               alt="好友头像"
             >
@@ -80,7 +80,7 @@
             @click="selectGroup(group)"
           >
             <img 
-              :src="group.avatar || '/default-group.png'" 
+              :src="getImageUrl(group.avatar) || '/default-group.png'" 
               class="group-avatar"
               alt="群组头像"
             >
@@ -92,6 +92,7 @@
         </div>
       </div>
 
+      <button v-if="currentUser?.isAdmin" class="admin-btn" @click="goToAdmin">管理</button>
       <button class="logout-btn" @click="handleLogout">退出</button>
     </div>
 
@@ -100,13 +101,13 @@
         <div class="chat-header-info">
           <img 
             v-if="currentGroup"
-            :src="currentGroup.avatar || '/default-group.png'" 
+            :src="getImageUrl(currentGroup.avatar) || '/default-group.png'" 
             class="chat-group-avatar"
             alt="群组头像"
           >
           <img 
             v-else-if="currentFriend"
-            :src="currentFriend.avatar || '/default-avatar.png'" 
+            :src="getImageUrl(currentFriend.avatar) || '/default-avatar.png'" 
             class="chat-group-avatar"
             alt="好友头像"
           >
@@ -932,7 +933,18 @@ export default {
     getImageUrl(url) {
       if (!url) return ''
       if (url.startsWith('http')) return url
-      return `http://localhost:3000${url}`
+      if (url.startsWith('data:')) return url // 处理 base64 格式的头像
+      // 修复路径拼写错误
+      if (url.startsWith('/upbads')) {
+        return url.replace('/upbads', '/uploads')
+      }
+      // 确保 /uploads 路径的图片使用正确的完整 URL
+      if (url.startsWith('/uploads')) {
+        // 使用后端服务的 URL
+        const baseUrl = 'http://localhost:3000'
+        return baseUrl + url
+      }
+      return url
     },
     
     insertEmoji(emoji) {
@@ -966,6 +978,9 @@ export default {
           url = `/api/private-messages/${this.currentFriend._id}/image`
         }
         
+        console.log('发送图片请求到:', url)
+        console.log('上传的文件:', file)
+        
         const response = await fetch(url, {
           method: 'POST',
           headers: {
@@ -974,10 +989,15 @@ export default {
           body: formData
         })
         
+        console.log('图片上传响应状态:', response.status)
+        
         if (response.ok) {
+          const data = await response.json()
+          console.log('图片上传成功:', data)
           await this.loadMessages()
         } else {
           const error = await response.json()
+          console.error('图片上传失败:', error)
           alert(error.message || '发送图片失败')
         }
       } catch (error) {
@@ -1192,6 +1212,10 @@ export default {
         clearInterval(this.pollingInterval)
       }
       this.$router.push('/')
+    },
+    
+    goToAdmin() {
+      this.$router.push('/admin')
     },
     
     startResize(event) {
@@ -1458,6 +1482,24 @@ export default {
   text-overflow: ellipsis;
 }
 
+.admin-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 20px;
+  margin: 10px auto 5px auto;
+  display: block;
+  transition: all 0.3s;
+}
+
+.admin-btn:hover {
+  background-color: #45a049;
+  transform: scale(1.05);
+}
+
 .logout-btn {
   background-color: #e74c3c;
   color: white;
@@ -1466,7 +1508,7 @@ export default {
   cursor: pointer;
   font-size: 12px;
   border-radius: 20px;
-  margin: 10px auto;
+  margin: 5px auto 10px auto;
   display: block;
   transition: all 0.3s;
 }
