@@ -208,7 +208,14 @@
             placeholder="输入消息..."
             class="message-input"
           >
-          <button @click="sendMessage" class="send-btn">发送</button>
+          <button 
+            @click="sendMessage" 
+            class="send-btn" 
+            :disabled="isSendingMessage"
+            :class="{ 'sending': isSendingMessage }"
+          >
+            {{ isSendingMessage ? '发送中...' : '发送' }}
+          </button>
         </div>
       </div>
     </div>
@@ -441,7 +448,11 @@
             <div class="group-info-header">
               <div class="group-avatar-edit">
                 <img :src="editGroupForm.avatar || '/default-group.png'" class="group-info-avatar" alt="群组头像">
-                <button class="change-avatar-btn" @click="triggerGroupAvatarUpload">更换头像</button>
+                <button class="change-avatar-btn" @click="triggerGroupAvatarUpload" title="更换头像">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                  </svg>
+                </button>
                 <input 
                   type="file" 
                   ref="groupAvatarInput" 
@@ -614,7 +625,8 @@ export default {
         name: '',
         description: '',
         avatar: ''
-      }
+      },
+      isSendingMessage: false
     }
   },
   computed: {
@@ -796,7 +808,13 @@ export default {
     },
     
     async sendMessage() {
+      // 防抖检查：如果正在发送中，直接返回
+      if (this.isSendingMessage) return
+      
       if (!this.inputMessage.trim() || (!this.currentGroup && !this.currentFriend)) return
+      
+      // 设置发送中标志
+      this.isSendingMessage = true
       
       try {
         const token = localStorage.getItem('token')
@@ -823,6 +841,9 @@ export default {
         }
       } catch (error) {
         console.error('发送消息失败:', error)
+      } finally {
+        // 无论成功失败，重置发送标志
+        this.isSendingMessage = false
       }
     },
     
@@ -1216,6 +1237,8 @@ export default {
           this.selectedUser = updatedUser
           this.isEditingProfile = false
           alert('资料更新成功！')
+          // 刷新页面以应用更新
+          window.location.reload()
         } else {
           const error = await response.json()
           alert(error.message || '更新失败')
@@ -1412,6 +1435,8 @@ export default {
           this.currentGroup = updatedGroup
           this.isEditingGroup = false
           alert('群组信息更新成功！')
+          // 刷新页面以应用更新
+          window.location.reload()
         } else {
           const error = await response.json()
           alert(error.message || '更新失败')
@@ -2283,6 +2308,13 @@ export default {
 
 .send-btn:hover {
   background-color: #45a049;
+}
+
+.send-btn:disabled,
+.send-btn.sending {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .no-group-selected {
