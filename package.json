@@ -1,0 +1,14 @@
+{
+  "name": "zozchat",
+  "version": "1.0.0",
+  "description": "ZOZchat - 在线聊天应用",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\""
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

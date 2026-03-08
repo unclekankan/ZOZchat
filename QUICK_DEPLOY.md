@@ -38,19 +38,16 @@ git push origin main
 #### 3. 部署后端
 1. 选择 "Deploy from GitHub repo"
 2. 选择你的仓库
-3. 点击 "Add Variables" 添加环境变量：
+3. **重要**：点击服务名称 → Settings → Builder，选择 **Nixpacks**
+4. 点击 "Variables" → "New Variable" 添加环境变量：
    ```
    NODE_ENV=production
    JWT_SECRET=your-random-secret-key-here-32chars
    ```
-4. 点击 "Add Plugin" → 选择 "MongoDB"
-5. 等待部署完成（约 2-3 分钟）
-
-#### 4. 获取数据库连接字符串
-1. 点击 MongoDB 插件
-2. 点击 "Connect" 标签
-3. 复制 "MongoDB Connection String"
-4. 添加到环境变量：`MONGODB_URI=复制的连接字符串`
+5. 点击 "Add Plugin" → 选择 "MongoDB"
+6. 等待 MongoDB 创建完成，然后点击它，选择 "Connect" 标签
+7. 复制连接字符串，添加为环境变量 `MONGODB_URI`
+8. 等待部署完成（约 2-3 分钟）
 
 #### 5. 生成域名
 1. 点击后端服务

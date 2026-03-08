@@ -260,4 +260,9 @@ router.post('/online-status', auth, async (req, res) => {
   }
 })
 
+// 健康检查端点（用于 Railway 等平台的健康检查）
+router.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
 module.exports = router
